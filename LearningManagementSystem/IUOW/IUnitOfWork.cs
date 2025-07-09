@@ -6,6 +6,7 @@ namespace LearningManagementSystem.IUOW
     public interface IUnitOfWork
     {
         IUserRepository Users { get; }
+        IInstructorRepository Instructors { get; }
         ICourseRepository Courses { get; }
         IModuleRepository Modules { get; }
         ILectureRepository Lectures { get; }

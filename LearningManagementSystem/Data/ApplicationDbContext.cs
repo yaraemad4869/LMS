@@ -12,6 +12,7 @@ namespace LearningManagementSystem.Data
         }
         #region   DBSets
         public DbSet<User> Users { get; set; }
+        public DbSet<Instructor> Instructors { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Module> Modules { get; set; }
@@ -28,10 +29,17 @@ namespace LearningManagementSystem.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         #endregion
+        public DbSet<LogEntry> LogEntries { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-
+            modelBuilder.Entity<LogEntry>(entity =>
+            {
+                entity.Property(e => e.Datetime).IsRequired();
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.Datetime);
+                entity.HasIndex(e => new { e.UserId, e.Datetime });
+            });
             #region Relationships
             // User
             modelBuilder.Entity<User>()

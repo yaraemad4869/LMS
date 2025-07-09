@@ -1,20 +1,44 @@
-﻿using LearningManagementSystem.IUOW;
+﻿using LearningManagementSystem.IServices;
+using LearningManagementSystem.IUOW;
 using LearningManagementSystem.Models;
+using LearningManagementSystem.Services;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace LearningManagementSystem.Service
 {
-    public class UserService
+    public class UserService : IUserService
     {
+        private readonly RedisCacheService _redisListService;
         private readonly IUnitOfWork _unitOfWork;
-        public UserService(IUnitOfWork unitOfWork)
+        public UserService(IUnitOfWork unitOfWork, RedisCacheService redisListService)
         {
             _unitOfWork = unitOfWork;
+            _redisListService = redisListService;
         }
         public async Task<User> GetUserByIdAsync(int id)
         {
-            return await _unitOfWork.Users.GetByIdAsync(id);
+            //const string cacheKey = "UserById";
+
+            //// Try to get data from cache
+            //var cachedDataStr = await _redisListService.;
+            //User cachedData = new User();
+            //if (cachedDataStr == null)
+            //{
+               User cachedData = await _unitOfWork.Users.GetByIdAsync(id);
+            //    var cacheOptions = new DistributedCacheEntryOptions
+            //    {
+            //        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
+            //        SlidingExpiration = TimeSpan.FromMinutes(10)
+            //    };
+
+            //    // Save data in cache
+            //    await _cache.SetStringAsync(cacheKey, cachedData, cacheOptions);
+            //}
+            //cachedData = JsonSerializer.Deserialize<List<User>>(cachedDataStr);
+            return cachedData;
         }
         public async Task<User> GetUserByEmailAsync(string email)
         {
@@ -109,9 +133,7 @@ namespace LearningManagementSystem.Service
         }
         public async Task<User> AuthenticateAsync(string usernameOrEmail, string password)
         {
-            User user;
-
-            user = await _unitOfWork.Users.GetByUsernameAsync(usernameOrEmail);
+            User user = await _unitOfWork.Users.GetByUsernameAsync(usernameOrEmail);
             if (user == null)
             {
                 user = await _unitOfWork.Users.GetByEmailAsync(usernameOrEmail);

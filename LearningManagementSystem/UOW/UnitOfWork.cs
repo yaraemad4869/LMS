@@ -14,6 +14,7 @@ namespace LearningManagementSystem.UOW
         {
             _context = context;
             Users = new UserRepository(_context);
+            Instructors = new InstructorRepository(_context);
             Courses = new CourseRepository(_context);
             Modules = new ModuleRepository(_context);
             Lectures = new LectureRepository(_context);
@@ -28,6 +29,7 @@ namespace LearningManagementSystem.UOW
         }
 
         public IUserRepository Users { get; private set; }
+        public IInstructorRepository Instructors { get; private set; }
         public ICourseRepository Courses { get; private set; }
         public IModuleRepository Modules { get; private set; }
         public ILectureRepository Lectures { get; private set; }

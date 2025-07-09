@@ -7,7 +7,7 @@
         public virtual Enrollment Enrollment { get; set; }
         public int LectureId { get; set; }
         public virtual Lecture Lecture { get; set; }
-        public bool IsCompleted { get; set; }
+        public bool IsCompleted { get; set; } = false;
         public DateTime? CompletionDate { get; set; }
     }
 }

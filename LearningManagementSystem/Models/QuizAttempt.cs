@@ -10,7 +10,7 @@
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public int Score { get; set; }
-        public bool Passed { get; set; }
+        public bool Passed { get; set; } = false;
         public virtual List<QuizAnswer> Answers { get; set; }
     }
 }

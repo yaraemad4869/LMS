@@ -1,7 +1,9 @@
-﻿using LearningManagementSystem.Data;
+﻿using System.Linq.Expressions;
+using LearningManagementSystem.Data;
 using LearningManagementSystem.IRepo;
+using LearningManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection;
+//using System.Reflection;
 
 namespace LearningManagementSystem.Repo
 {
@@ -10,6 +12,7 @@ namespace LearningManagementSystem.Repo
         public ModuleRepository(ApplicationDbContext context) : base(context)
         {
         }
+
         public async Task<IEnumerable<Module>> GetModulesByCourseAsync(int courseId)
         {
             var modules = await _context.Modules
@@ -24,7 +27,6 @@ namespace LearningManagementSystem.Repo
             }
 
             return (IEnumerable<Module>)modules;
-
         }
     }
 }

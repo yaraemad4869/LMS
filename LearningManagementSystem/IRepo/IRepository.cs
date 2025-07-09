@@ -11,11 +11,11 @@ namespace LearningManagementSystem.Repo
         Task<TEntity> GetByIdAsync(int id);
         Task<IEnumerable<TEntity>> GetAllAsync();
         Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate);
-        Task AddAsync(TEntity entity);
-        Task AddRangeAsync(IEnumerable<TEntity> entities);
-        void Update(TEntity entity);
-        void Remove(TEntity entity);
-        void RemoveRange(IEnumerable<TEntity> entities);
+        Task<TEntity> AddAsync(TEntity entity);
+        Task<IEnumerable<TEntity>> AddRangeAsync(IEnumerable<TEntity> entities);
+        Task<TEntity> Update(TEntity entity);
+        Task<TEntity> Remove(TEntity entity);
+        Task<IEnumerable<TEntity>> RemoveRange(IEnumerable<TEntity> entities);
         Task<int> SaveChangesAsync();
     }
 }

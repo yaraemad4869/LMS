@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ViewEngines;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 
 namespace LearningManagementSystem.Models
@@ -10,6 +11,7 @@ namespace LearningManagementSystem.Models
         public string Description { get; set; }
         public string ThumbnailUrl { get; set; }
         public decimal Price { get; set; }
+        [ForeignKey("Instructor")]
         public int InstructorId { get; set; }
         public virtual User Instructor { get; set; }
         public DateTime CreatedAt { get; set; }

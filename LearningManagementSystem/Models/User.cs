@@ -20,7 +20,7 @@ namespace LearningManagementSystem.Models
         public string Password { get; set; }
 
         [ForeignKey("UserRole")]
-        public int RoleId { get; set; } = -3; // Default role ID for Student
+        public virtual int RoleId { get; set; } = -3; // Default role ID for Student
         public virtual Role UserRole { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? LastLogin { get; set; }

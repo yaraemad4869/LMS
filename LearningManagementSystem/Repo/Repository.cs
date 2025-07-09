@@ -26,25 +26,37 @@ namespace LearningManagementSystem.Repo
         {
             return await _dbSet.Where(predicate).ToListAsync();
         }
-        public async Task AddAsync(TEntity entity)
+        public async Task<TEntity> AddAsync(TEntity entity)
         {
             await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return entity;
+
         }
-        public async Task AddRangeAsync(IEnumerable<TEntity> entities)
+        public async Task<IEnumerable<TEntity>> AddRangeAsync(IEnumerable<TEntity> entities)
         {
             await _dbSet.AddRangeAsync(entities);
+            await _context.SaveChangesAsync();
+            return entities;
         }
-        public void Update(TEntity entity)
+        public async Task<TEntity> Update(TEntity entity)
         {
             _dbSet.Update(entity);
+            await _context.SaveChangesAsync();
+            return entity;
+
         }
-        public void Remove(TEntity entity)
+        public async Task<TEntity> Remove(TEntity entity)
         {
             _dbSet.Remove(entity);
+            await _context.SaveChangesAsync();
+            return entity;
         }
-        public void RemoveRange(IEnumerable<TEntity> entities)
+        public async Task<IEnumerable<TEntity>> RemoveRange(IEnumerable<TEntity> entities)
         {
             _dbSet.RemoveRange(entities);
+            await _context.SaveChangesAsync();
+            return entities;
         }
         public async Task<int> SaveChangesAsync()
         {
