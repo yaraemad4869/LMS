@@ -78,10 +78,10 @@ namespace LearningManagementSystem.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
-
             try
             {
                 if (_cache.TryGetValue(_enrollmentIdCacheKey, out Enrollment cachedEnrollment))
@@ -91,16 +91,25 @@ namespace LearningManagementSystem.Controllers
                 }
                 else
                 {
-                    var enrollments = await _unitOfWork.Enrollments.GetAllAsync();
-                    var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetSlidingExpiration(TimeSpan.FromMinutes(5)) // Cache expires if not accessed for 5 mins
-                    .SetAbsoluteExpiration(TimeSpan.FromHours(1))  // Cache expires after 1 hour
-                .SetPriority(CacheItemPriority.Normal);
+                    var enrollment = await _unitOfWork.Enrollments.GetByIdAsync(id);
+                    if (enrollment.StudentId == user.Id || enrollment.Course.InstructorId == user.Id || user.UserRole.Name == "Admin")
+                    {
+                        var cacheEntryOptions = new MemoryCacheEntryOptions()
+                        .SetSlidingExpiration(TimeSpan.FromMinutes(5)) // Cache expires if not accessed for 5 mins
+                        .SetAbsoluteExpiration(TimeSpan.FromHours(1))  // Cache expires after 1 hour
+                    .SetPriority(CacheItemPriority.Normal);
 
-                    // Save data in cache
-                    _cache.Set(_enrollmentIdCacheKey, enrollments, cacheEntryOptions);
-                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetById", cachedEnrollment.Id.ToString(), "Enrollment", $"Retrieved enrollment ({cachedEnrollment.Id}) from database", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
-                    return Ok(enrollments);
+                        // Save data in cache
+                        _cache.Set(_enrollmentIdCacheKey, enrollment, cacheEntryOptions);
+                        await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetById", cachedEnrollment.Id.ToString(), "Enrollment", $"Retrieved enrollment ({cachedEnrollment.Id}) from database", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                        return Ok(enrollment);
+                    }
+                    else
+                    {
+                        await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetById", cachedEnrollment.Id.ToString(), "Enrollment", $"Retrieved enrollment ({cachedEnrollment.Id}) from database", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                        _logger.LogWarning($"User {user?.Id} with role {user?.UserRole.Name} attempted to access enrollment {id} without permission.");
+                        return Unauthorized();
+                    }
                 }
             }
             catch (Exception ex)
@@ -113,6 +122,7 @@ namespace LearningManagementSystem.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Post(Enrollment enrollment)
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
@@ -140,7 +150,7 @@ namespace LearningManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize("Admin,Instructor")]
         public async Task<IActionResult> Put(int id, Enrollment enrollment)
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
@@ -208,6 +218,106 @@ namespace LearningManagementSystem.Controllers
 
                 _logger.LogError(ex, $"Error deleting enrollment ({id})");
                 return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpGet("student/{studentId}")]
+        [Authorize(Roles = "Admin,Student")]
+        public async Task<IActionResult> GetEnrollmentsByStudentId(int studentId)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            if (user.Id == studentId || user.UserRole.Name == "Admin")
+            {
+                try
+                {
+                    var enrollments = await _unitOfWork.Enrollments.GetEnrollmentsByStudentAsync(studentId);
+                    if (enrollments == null || !enrollments.Any())
+                    {
+                        await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentsByStudentId", studentId.ToString(), "Enrollment", $"No enrollments found for student ({studentId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                        return NotFound("No enrollments found for this student");
+                    }
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentsByStudentId", studentId.ToString(), "Enrollment", $"Retrieved enrollments for student ({studentId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    return Ok(enrollments);
+                }
+                catch (Exception ex)
+                {
+                    await _loggingService.LogAsync("System", "System", "System", "GetEnrollmentsByStudentId", studentId.ToString(), "Enrollment", $"Error getting enrollments for student ({studentId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    _logger.LogError(ex, $"Error getting enrollments for student ({studentId})");
+                    return StatusCode(500, "Internal server error");
+                }
+            }
+            else
+            {
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentsByStudentId", studentId.ToString(), "Enrollment", $"User {user?.Id} with role {user?.UserRole.Name} attempted to access enrollments for student ({studentId}) without permission", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogWarning($"User {user?.Id} with role {user?.UserRole.Name} attempted to access enrollments for student {studentId} without permission.");
+                return Unauthorized("You do not have permission to view this student's enrollments");
+            }
+        }
+        [HttpGet("course/{courseId}")]
+        [Authorize(Roles = "Admin,Instructor")]
+        public async Task<IActionResult> GetEnrollmentsByCourseAsync(int courseId)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            Course? course = await _unitOfWork.Courses.GetByIdAsync(courseId);
+            if (course == null)
+            {
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentsByCourseId", courseId.ToString(), "Enrollment", $"Course ({courseId}) not found", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                return NotFound("Course not found");
+            }
+            else if (course.InstructorId != user.Id && user.UserRole.Name != "Admin")
+            {
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentsByCourseId", courseId.ToString(), "Enrollment", $"User {user?.Id} with role {user?.UserRole.Name} attempted to access enrollments for course ({courseId}) without permission", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogWarning($"User {user?.Id} with role {user?.UserRole.Name} attempted to access enrollments for course {courseId} without permission.");
+                return Unauthorized("You do not have permission to view this course's enrollments");
+            }
+            try
+            {
+                var enrollments = await _unitOfWork.Enrollments.GetEnrollmentsByCourseAsync(courseId);
+
+                if (enrollments == null || !enrollments.Any())
+                {
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentsByCourseId", courseId.ToString(), "Enrollment", $"No enrollments found for course ({courseId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    return NotFound("No enrollments found for this course");
+                }
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentsByCourseId", courseId.ToString(), "Enrollment", $"Retrieved enrollments for course ({courseId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                return Ok(enrollments);
+            }
+            catch (Exception ex)
+            {
+                await _loggingService.LogAsync("System", "System", "System", "GetEnrollmentsByCourseId", courseId.ToString(), "Enrollment", $"Error getting enrollments for course ({courseId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogError(ex, $"Error getting enrollments for course ({courseId})");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpGet("student/{studentId}/course/{courseId}")]
+        [Authorize(Roles = "Admin,Student")]
+        public async Task<IActionResult> GetEnrollment(int studentId, int courseId)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            if (user.Id == studentId || user.UserRole.Name == "Admin")
+            {
+                try
+                {
+                    var enrollment = await _unitOfWork.Enrollments.GetEnrollmentAsync(studentId, courseId);
+                    if (enrollment == null)
+                    {
+                        await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentByStudentAndCourse", $"{studentId}-{courseId}", "Enrollment", $"No enrollment found for student ({studentId}) in course ({courseId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                        return NotFound("No enrollment found for this student in the specified course");
+                    }
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentByStudentAndCourse", $"{studentId}-{courseId}", "Enrollment", $"Retrieved enrollment for student ({studentId}) in course ({courseId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    return Ok(enrollment);
+                }
+                catch (Exception ex)
+                {
+                    await _loggingService.LogAsync("System", "System", "System", "GetEnrollmentByStudentAndCourse", $"{studentId}-{courseId}", "Enrollment", $"Error getting enrollment for student ({studentId}) in course ({courseId})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    _logger.LogError(ex, $"Error getting enrollment for student ({studentId}) in course ({courseId})");
+                    return StatusCode(500, "Internal server error");
+                }
+            }
+            else
+            {
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetEnrollmentByStudentAndCourse", $"{studentId}-{courseId}", "Enrollment", $"User {user?.Id} with role {user?.UserRole.Name} attempted to access enrollment for student ({studentId}) in course ({courseId}) without permission", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogWarning($"User {user?.Id} with role {user?.UserRole.Name} attempted to access enrollment for student {studentId} in course {courseId} without permission.");
+                return Unauthorized("You do not have permission to view this student's enrollment in the specified course");
             }
         }
     }

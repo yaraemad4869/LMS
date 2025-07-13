@@ -1,7 +1,7 @@
 ﻿using LearningManagementSystem.Data.@enum;
 using LearningManagementSystem.Models;
 using LearningManagementSystem.Models.DTOs;
-using LearningManagementSystem.Service;
+using LearningManagementSystem.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

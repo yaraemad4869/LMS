@@ -140,34 +140,41 @@ namespace LearningManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles ="Admin,Instructor")]
         public async Task<IActionResult> Put(int id, Instructor instructor)
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            if(user.Id!=instructor.Id && user.UserRole.Name != "Admin")
+            {
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "Put", instructor.Id.ToString(), "Instructor", $"Unauthorized attempt to update instructor ({id})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogWarning($"User {user?.FullName} with ID {user?.Id} attempted to update instructor {id} without authorization.");
+                return Unauthorized("You are not authorized to update this instructor");
+            }
             try
             {
                 if (instructor == null)
                 {
                     await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "Put", instructor.Id.ToString(), "Instructor", $"There is no instructor", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
-
+                    _logger.LogWarning($"User {user?.FullName} with ID {user?.Id} attempted to update an instructor that does not exist.");
                     return BadRequest("There is no instructor");
                 }
                 else if (id != instructor.Id)
                 {
                     await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "Put", instructor.Id.ToString(), "Instructor", $"Instructor ID mismatch", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
-
+                    _logger.LogWarning($"User {user?.FullName} with ID {user?.Id} attempted to update instructor {id} with a different ID ({instructor.Id}).");
                     return BadRequest("Instructor ID mismatch");
                 }
                 var existingInstructor = await _unitOfWork.Instructors.GetByIdAsync(id);
                 if (existingInstructor == null)
                 {
                     await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "Put", instructor.Id.ToString(), "Instructor", $"Instructor not found", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
-
+                    _logger.LogWarning($"User {user?.FullName} with ID {user?.Id} attempted to update instructor {id} that does not exist.");
                     return NotFound("Instructor not found");
                 }
                 await _unitOfWork.Instructors.Update(instructor);
                 _cache.Remove(_instructorsCacheKey);
                 await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "Put", instructor.Id.ToString(), "Instructor", $"Put instructor ({id})", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
-
+                _logger.LogInformation($"User {user?.FullName} with ID {user?.Id} updated instructor {id} successfully.");
                 return Ok(instructor);
             }
 

@@ -15,11 +15,11 @@ namespace LearningManagementSystem.Repo
         public CertificateRepository(ApplicationDbContext context) : base(context)
         {
         }
-        public async Task<Certificate> GetByEnrollmentIdAsync(int enrollmentId)
-        {
-            return await _context.Certificates
-                .FirstOrDefaultAsync(c => c.EnrollmentId == enrollmentId);
-        }
+        //public async Task<Certificate> GetByEnrollmentIdAsync(int enrollmentId)
+        //{
+        //    return await _context.Certificates
+        //        .FirstOrDefaultAsync(c => c.EnrollmentId == enrollmentId);
+        //}
 
         //public async Task<Certificate> GetByVerificationCodeAsync(string verificationCode)
         //{

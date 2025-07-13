@@ -84,7 +84,7 @@ namespace LearningManagementSystem.Controllers
             {
                 if (_cache.TryGetValue(_certificateIdCacheKey, out Certificate cachedCertificate))
                 {
-                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetById", cachedCertificate.Id.ToString(), "Certificate", $"Retrieved certificate ({cachedCertificate.Id}) from cache", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetById", cachedCertificate.Id.ToString(), "Certificate", $"Retrieved certificate ({cachedCertificate.Id}) from cache", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
                     return Ok(cachedCertificate);
                 }
                 else
@@ -97,7 +97,7 @@ namespace LearningManagementSystem.Controllers
 
                     // Save data in cache
                     _cache.Set(_certificateIdCacheKey, certificates, cacheEntryOptions);
-                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetById", cachedCertificate.Id.ToString(),"Certificate", $"Retrieved certificate ({cachedCertificate.Id}) from database", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "System", user?.UserRole.Name, "GetById", cachedCertificate.Id.ToString(),"Certificate", $"Retrieved certificate ({cachedCertificate.Id}) from database", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
                     return Ok(certificates);
                 }
             }
@@ -139,6 +139,7 @@ namespace LearningManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Put(int id, Certificate certificate)
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
@@ -209,6 +210,7 @@ namespace LearningManagementSystem.Controllers
             }
         }
         [HttpGet("generate-certificate/{enrollmentId}")]
+        [Authorize]
         public async Task<IActionResult> GenerateCertificatePdf(int enrollmentId)
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);

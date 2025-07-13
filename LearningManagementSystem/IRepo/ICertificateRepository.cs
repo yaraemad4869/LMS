@@ -5,7 +5,7 @@ namespace LearningManagementSystem.IRepo
 {
     public interface ICertificateRepository : IRepository<Certificate>
     {
-        Task<Certificate> GetByEnrollmentIdAsync(int enrollmentId);
+        //Task<Certificate> GetByEnrollmentIdAsync(int enrollmentId);
         //Task<Certificate> GetByVerificationCodeAsync(string verificationCode);
         Task<Certificate> GenerateCertificatePdf(int enrollmentId);
     }

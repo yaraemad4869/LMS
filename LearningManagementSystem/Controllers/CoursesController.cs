@@ -36,20 +36,15 @@ namespace LearningManagementSystem.Controllers
             _httpContextAccessor = httpContextAccessor;
         }
         [HttpGet]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
-            if (user == null)
-            {
-                return Unauthorized("User not found");
-            }
             //_logger.LogInformation($"{user.FullName} with id {user.Id} is getting all courses");
             try
             {
                 if (_cache.TryGetValue(_coursesCacheKey, out IEnumerable<Course> cachedCourses))
                 {
-                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetCourses", "", "Course", $"Retrieved {cachedCourses.Count()} courses from cache", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetCourses", "", "Course", $"Retrieved {cachedCourses.Count()} courses from cache", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
                     return Ok(cachedCourses);
                 }
                 else
@@ -85,7 +80,7 @@ namespace LearningManagementSystem.Controllers
             {
                 if (_cache.TryGetValue(_courseIdCacheKey, out Course cachedCourse))
                 {
-                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetById", cachedCourse.Id.ToString(), "Course", $"Retrieved course ({cachedCourse.Id}) from cache", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetById", cachedCourse.Id.ToString(), "Course", $"Retrieved course ({cachedCourse.Id}) from cache", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
                     return Ok(cachedCourse);
                 }
                 else
@@ -98,7 +93,7 @@ namespace LearningManagementSystem.Controllers
 
                     // Save data in cache
                     _cache.Set(_courseIdCacheKey, courses, cacheEntryOptions);
-                    await _loggingService.LogAsync(user?.Id.ToString() ?? "System", user?.FullName ?? "System", user?.UserRole.Name, "GetById", cachedCourse.Id.ToString(), "Course", $"Retrieved course ({cachedCourse.Id}) from database", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetById", cachedCourse.Id.ToString(), "Course", $"Retrieved course ({cachedCourse.Id}) from database", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
                     return Ok(courses);
                 }
             }
@@ -140,6 +135,7 @@ namespace LearningManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Instructor")]
         public async Task<IActionResult> Put(int id, Course course)
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
@@ -181,7 +177,7 @@ namespace LearningManagementSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Instructor")]
         public async Task<IActionResult> Delete(int id)
         {
             User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
@@ -206,6 +202,127 @@ namespace LearningManagementSystem.Controllers
                 await _loggingService.LogAsync("System", "System", "System", "Delete", id.ToString(), "Course", $"Error deleting course", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
 
                 _logger.LogError(ex, $"Error deleting course ({id})");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpGet("search")]
+        public async Task<IActionResult> Search(string query)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            try
+            {
+                var courses = await _unitOfWork.Courses.SearchCoursesAsync(query);
+                if (courses == null || !courses.Any())
+                {
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "Search", query, "Course", $"No courses found for search query: {query}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    return NotFound("No courses found");
+                }
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "Search", query, "Course", $"Found {courses.Count()} courses for search query: {query}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                return Ok(courses);
+            }
+            catch (Exception ex)
+            {
+                await _loggingService.LogAsync("System", "System", "System", "Search", query, "Course", $"Error searching courses with query: {query}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogError(ex, $"Error searching courses with query: {query}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpGet("instructor/{instructorId}")]
+        public async Task<IActionResult> GetCoursesByInstructor(int instructorId)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            try
+            {
+                var courses = await _unitOfWork.Courses.GetCoursesByInstructorAsync(instructorId);
+                if (courses == null || !courses.Any())
+                {
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetCoursesByInstructor", instructorId.ToString(), "Course", $"No courses found for instructor ID: {instructorId}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    return NotFound("No courses found for this instructor");
+                }
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetCoursesByInstructor", instructorId.ToString(), "Course", $"Found {courses.Count()} courses for instructor ID: {instructorId}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                return Ok(courses);
+            }
+            catch (Exception ex)
+            {
+                await _loggingService.LogAsync("System", "System", "System", "GetCoursesByInstructor", instructorId.ToString(), "Course", $"Error getting courses for instructor ID: {instructorId}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogError(ex, $"Error getting courses for instructor ID: {instructorId}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpGet("student/{studentId}")]
+        [Authorize(Roles = "Admin,Student")]
+        public async Task<IActionResult> GetCoursesByStudent(int studentId)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            if (user.Id == studentId || user.UserRole.Name=="Admin")
+            {
+                try
+                {
+                    var courses = user.Courses.ToList();
+                    if (courses == null || !courses.Any())
+                    {
+                        await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetCoursesByStudent", studentId.ToString(), "Course", $"No courses found for student ID: {studentId}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                        return NotFound("No courses found for this student");
+                    }
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetCoursesByStudent", studentId.ToString(), "Course", $"Found {courses.Count()} courses for student ID: {studentId}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    return Ok(courses);
+                }
+                catch (Exception ex)
+                {
+                    await _loggingService.LogAsync("System", "System", "System", "GetCoursesByStudent", studentId.ToString(), "Course", $"Error getting courses for student ID: {studentId}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    _logger.LogError(ex, $"Error getting courses for student ID: {studentId}");
+                    return StatusCode(500, "Internal server error");
+                }
+            }
+            else
+            {
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetCoursesByStudent", studentId.ToString(), "Course", $"Unauthorized access attempt to get courses for student ID: {studentId}", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogWarning($"Unauthorized access attempt by user {user?.FullName} with ID {user?.Id} to get courses for student ID: {studentId}");
+                return Unauthorized();
+            }
+        }
+
+        [HttpGet("popular/{count}")]
+        public async Task<IActionResult> GetPopularCourses(int count)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            try
+            {
+                var courses = await _unitOfWork.Courses.GetPopularCoursesAsync(count);
+                if (courses == null || !courses.Any())
+                {
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetPopularCourses", "", "Course", $"No popular courses found", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    return NotFound("No popular courses found");
+                }
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetPopularCourses", "", "Course", $"Found {courses.Count()} popular courses", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                return Ok(courses);
+            }
+            catch (Exception ex)
+            {
+                await _loggingService.LogAsync("System", "System", "System", "GetPopularCourses", "", "Course", $"Error getting popular courses", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogError(ex, $"Error getting popular courses");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpGet("recent/{count}")]
+        public async Task<IActionResult> GetRecentCourses(int count)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(User?.Identity?.Name);
+            try
+            {
+                var courses = await _unitOfWork.Courses.GetNewestCoursesAsync(count);
+                if (courses == null || !courses.Any())
+                {
+                    await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetRecentCourses", "", "Course", $"No recent courses found", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    return NotFound("No recent courses found");
+                }
+                await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetRecentCourses", "", "Course", $"Found {courses.Count()} recent courses", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                return Ok(courses);
+            }
+            catch (Exception ex)
+            {
+                await _loggingService.LogAsync("System", "System", "System", "GetRecentCourses", "", "Course", $"Error getting recent courses", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                _logger.LogError(ex, $"Error getting recent courses");
                 return StatusCode(500, "Internal server error");
             }
         }

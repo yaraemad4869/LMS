@@ -25,5 +25,6 @@ namespace LearningManagementSystem.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? LastLogin { get; set; }
         public bool IsActive { get; set; } = true;
+        public virtual List<Course> Courses { get; set; } = new List<Course>();
     }
 }

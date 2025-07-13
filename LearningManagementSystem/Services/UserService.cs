@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace LearningManagementSystem.Service
+namespace LearningManagementSystem.Services
 {
     public class UserService : IUserService
     {

@@ -1,8 +1,7 @@
-﻿namespace LearningManagementSystem.Mapping
+﻿using AutoMapper;
+using LearningManagementSystem.Models;
+namespace LearningManagementSystem.Mapping
 {
-    // Mapping/MappingProfile.cs
-    using AutoMapper;
-    using LearningManagementSystem.Models;
 
     public class MappingProfile : Profile
     {
