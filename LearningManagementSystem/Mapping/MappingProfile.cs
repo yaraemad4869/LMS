@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using LearningManagementSystem.Models;
+using LearningManagementSystem.Models.DTOs;
 namespace LearningManagementSystem.Mapping
 {
 
@@ -8,7 +9,9 @@ namespace LearningManagementSystem.Mapping
         public MappingProfile()
         {
             // CreateMap<Source, Destination>();
-            //CreateMap<Certificate, CertificateD>();
+            CreateMap<Certificate, CertificateDto>().ForMember(cd=> cd.CourseName, opt=>opt.MapFrom(c=>c.Enrollment.Course.Title))
+                .ForMember(cd => cd.StudentName, opt => opt.MapFrom(c => c.Enrollment.Student.FullName));
+            CreateMap<CertificateDto, Certificate>();
             //CreateMap<ProductDto, Product>();
 
             // For more complex mappings

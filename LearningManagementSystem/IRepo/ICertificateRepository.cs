@@ -1,4 +1,5 @@
 ﻿using LearningManagementSystem.Models;
+using LearningManagementSystem.Models.DTOs;
 using LearningManagementSystem.Repo;
 
 namespace LearningManagementSystem.IRepo
@@ -7,6 +8,7 @@ namespace LearningManagementSystem.IRepo
     {
         //Task<Certificate> GetByEnrollmentIdAsync(int enrollmentId);
         //Task<Certificate> GetByVerificationCodeAsync(string verificationCode);
-        Task<Certificate> GenerateCertificatePdf(int enrollmentId);
+        Task<byte[]> GenerateCertificatePdf(int enrollmentId);
+        Task<List<CertificateDto>> GetCertificatesByStudent(int studentId);
     }
 }

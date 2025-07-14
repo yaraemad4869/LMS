@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Office2010.Excel;
+﻿using AutoMapper;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using LearningManagementSystem.Extensions;
 using LearningManagementSystem.IServices;
@@ -20,20 +21,22 @@ namespace LearningManagementSystem.Controllers
         private readonly UserManager<User> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
         private readonly ILogger<CoursesController> _logger;
         private readonly ILoggingService _loggingService;
         private readonly IMemoryCache _cache;
         private readonly string _coursesCacheKey = "CoursesCache";
         private readonly string _courseIdCacheKey = "CourseIdCache";
 
-        public CoursesController(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ILoggingService loggingService, /*ILogger<CoursesController> logger,*/ UserManager<User> userManager, IMemoryCache cache)
+        public CoursesController(IMapper mapper,IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ILoggingService loggingService, ILogger<CoursesController> logger, UserManager<User> userManager, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
-            //_logger = logger;
+            _logger = logger;
             _userManager = userManager;
             _cache = cache;
             _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
+            _mapper = mapper;
         }
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -45,11 +48,13 @@ namespace LearningManagementSystem.Controllers
                 if (_cache.TryGetValue(_coursesCacheKey, out IEnumerable<Course> cachedCourses))
                 {
                     await _loggingService.LogAsync(user?.Id.ToString() ?? "Unathorized", user?.FullName ?? "Unathorized", user?.UserRole.Name, "GetCourses", "", "Course", $"Retrieved {cachedCourses.Count()} courses from cache", _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "");
+                    
                     return Ok(cachedCourses);
                 }
                 else
                 {
                     var courses = await _unitOfWork.Courses.GetAllAsync();
+
                     var cacheEntryOptions = new MemoryCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(5)) // Cache expires if not accessed for 5 mins
                 .SetAbsoluteExpiration(TimeSpan.FromHours(1))  // Cache expires after 1 hour
