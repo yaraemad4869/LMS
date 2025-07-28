@@ -10,8 +10,8 @@ namespace LearningManagementSystem.IUOW
         ICourseRepository Courses { get; }
         IModuleRepository Modules { get; }
         ILectureRepository Lectures { get; }
-        IQuizRepository Quizzes { get; }
-        IQuizAttemptRepository QuizAttempts { get; }
+        //IQuizRepository Quizzes { get; }
+        //IQuizAttemptRepository QuizAttempts { get; }
         IEnrollmentRepository Enrollments { get; }
         IProgressRepository Progress { get; }
         ICertificateRepository Certificates { get; }

@@ -18,8 +18,8 @@ namespace LearningManagementSystem.UOW
             Courses = new CourseRepository(_context);
             Modules = new ModuleRepository(_context);
             Lectures = new LectureRepository(_context);
-            Quizzes = new QuizRepository(_context);
-            QuizAttempts = new QuizAttemptRepository(_context);
+            //Quizzes = new QuizRepository(_context);
+            //QuizAttempts = new QuizAttemptRepository(_context);
             Enrollments = new EnrollmentRepository(_context);
             Progress = new ProgressRepository(_context);
             Certificates = new CertificateRepository(_context);
@@ -34,8 +34,8 @@ namespace LearningManagementSystem.UOW
         public ICourseRepository Courses { get; private set; }
         public IModuleRepository Modules { get; private set; }
         public ILectureRepository Lectures { get; private set; }
-        public IQuizRepository Quizzes { get; private set; }
-        public IQuizAttemptRepository QuizAttempts { get; private set; }
+        //public IQuizRepository Quizzes { get; private set; }
+        //public IQuizAttemptRepository QuizAttempts { get; private set; }
         public IEnrollmentRepository Enrollments { get; private set; }
         public IProgressRepository Progress { get; private set; }
         public ICertificateRepository Certificates { get; private set; }

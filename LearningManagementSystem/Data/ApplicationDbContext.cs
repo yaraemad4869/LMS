@@ -19,13 +19,13 @@ namespace LearningManagementSystem.Data
         public DbSet<Module> Modules { get; set; }
         public DbSet<Lecture> Lectures { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<Quiz> Quizzes { get; set; }
-        public DbSet<Question> Questions { get; set; }
-        public DbSet<Answer> Answers { get; set; }
+        //public DbSet<Quiz> Quizzes { get; set; }
+        //public DbSet<Question> Questions { get; set; }
+        //public DbSet<Answer> Answers { get; set; }
         public DbSet<Enrollment> Enrollments { get; set; }
         public DbSet<Progress> Progresses { get; set; }
-        public DbSet<QuizAttempt> QuizAttempts { get; set; }
-        public DbSet<QuizAnswer> QuizAnswers { get; set; }
+        //public DbSet<QuizAttempt> QuizAttempts { get; set; }
+        //public DbSet<QuizAnswer> QuizAnswers { get; set; }
         public DbSet<Certificate> Certificates { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Payment> Payments { get; set; }
@@ -77,22 +77,22 @@ namespace LearningManagementSystem.Data
                 .HasForeignKey(l => l.ModuleId);
 
             // Quiz
-            modelBuilder.Entity<Quiz>()
-                .HasOne(q => q.Lecture)
-                .WithMany()
-                .HasForeignKey(q => q.LectureId);
+            //modelBuilder.Entity<Quiz>()
+            //    .HasOne(q => q.Lecture)
+            //    .WithMany()
+            //    .HasForeignKey(q => q.LectureId);
 
             // Question
-            modelBuilder.Entity<Question>()
-                .HasOne(q => q.Quiz)
-                .WithMany(q => q.Questions)
-                .HasForeignKey(q => q.QuizId);
+            //modelBuilder.Entity<Question>()
+            //    .HasOne(q => q.Quiz)
+            //    .WithMany(q => q.Questions)
+            //    .HasForeignKey(q => q.QuizId);
 
             // Answer
-            modelBuilder.Entity<Answer>()
-                .HasOne(a => a.Question)
-                .WithMany(q => q.Answers)
-                .HasForeignKey(a => a.QuestionId);
+            //modelBuilder.Entity<Answer>()
+            //    .HasOne(a => a.Question)
+            //    .WithMany(q => q.Answers)
+            //    .HasForeignKey(a => a.QuestionId);
 
             // Enrollment
             modelBuilder.Entity<Enrollment>()
@@ -120,35 +120,35 @@ namespace LearningManagementSystem.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // QuizAttempt
-            modelBuilder.Entity<QuizAttempt>()
-                .HasOne(qa => qa.Student)
-                .WithMany()
-                .HasForeignKey(qa => qa.StudentId)
-                .OnDelete(DeleteBehavior.Restrict);
+            //modelBuilder.Entity<QuizAttempt>()
+            //    .HasOne(qa => qa.Student)
+            //    .WithMany()
+            //    .HasForeignKey(qa => qa.StudentId)
+            //    .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<QuizAttempt>()
-                .HasOne(qa => qa.Quiz)
-                .WithMany()
-                .HasForeignKey(qa => qa.QuizId)
-                .OnDelete(DeleteBehavior.Restrict);
+            //modelBuilder.Entity<QuizAttempt>()
+            //    .HasOne(qa => qa.Quiz)
+            //    .WithMany()
+            //    .HasForeignKey(qa => qa.QuizId)
+            //    .OnDelete(DeleteBehavior.Restrict);
 
             // QuizAnswer
-            modelBuilder.Entity<QuizAnswer>()
-                .HasOne(qa => qa.QuizAttempt)
-                .WithMany(qa => qa.Answers)
-                .HasForeignKey(qa => qa.QuizAttemptId);
+            //modelBuilder.Entity<QuizAnswer>()
+            //    .HasOne(qa => qa.QuizAttempt)
+            //    .WithMany(qa => qa.Answers)
+            //    .HasForeignKey(qa => qa.QuizAttemptId);
 
-            modelBuilder.Entity<QuizAnswer>()
-                .HasOne(qa => qa.Question)
-                .WithMany()
-                .HasForeignKey(qa => qa.QuestionId)
-                .OnDelete(DeleteBehavior.Restrict);
+            //modelBuilder.Entity<QuizAnswer>()
+            //    .HasOne(qa => qa.Question)
+            //    .WithMany()
+            //    .HasForeignKey(qa => qa.QuestionId)
+            //    .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<QuizAnswer>()
-                .HasOne(qa => qa.SelectedAnswer)
-                .WithMany()
-                .HasForeignKey(qa => qa.SelectedAnswerId)
-                .OnDelete(DeleteBehavior.Restrict);
+            //modelBuilder.Entity<QuizAnswer>()
+            //    .HasOne(qa => qa.SelectedAnswer)
+            //    .WithMany()
+            //    .HasForeignKey(qa => qa.SelectedAnswerId)
+                //.OnDelete(DeleteBehavior.Restrict);
 
             // Certificate
             modelBuilder.Entity<Certificate>()

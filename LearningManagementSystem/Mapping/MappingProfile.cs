@@ -26,10 +26,6 @@ namespace LearningManagementSystem.Mapping
             CreateMap<ReviewDto, Review>();
             CreateMap<LectureDto, Lecture>();
             CreateMap<Lecture, LectureDto>();
-            //CreateMap<ProductDto, Product>();
-
-            // CreateMap<Source, Destination>()
-            //     .ForMember(dest => dest.Property, opt => opt.MapFrom(src => src.SourceProperty));
         }
     }
 }
