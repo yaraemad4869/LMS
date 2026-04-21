@@ -1,0 +1,35 @@
+name: Deploy to MonsterASP.NET
+
+on:
+  push:
+    branches: [ "master" ] 
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+      
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish --runtime win-x86 --self-contained
+      
+      - name: Deploy to MonsterASP.NET
+        uses: rasmusbuchholdt/simply-web-deploy@2.1.0
+        with:
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
+          source-path: ./publish/
