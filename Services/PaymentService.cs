@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
-using PayPal;
 using PayPal.Api;
+using PaypalServerSdk;
 using System;
 using System.Collections.Generic;
 namespace LearningManagementSystem.Services
